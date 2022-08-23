@@ -1,5 +1,10 @@
 import 'firebase/firestore'
-import { GoogleMap, useJsApiLoader } from '@react-google-maps/api'
+import {
+  GoogleMap,
+  useJsApiLoader,
+  Marker,
+  InfoWindow,
+} from '@react-google-maps/api'
 import firebase from 'firebase/app'
 import { Autocomplete, TextField } from '@mui/material'
 import { useRef, useCallback, useState, useEffect } from 'react'
@@ -15,13 +20,14 @@ const mapContainerStyle = {
   height: '100vh',
 }
 const center = {
-  lat: 41.499321,
-  lng: -81.694359,
+  lat: 34.0689,
+  lng: -118.4452,
 }
 
 const Dashboard = () => {
-  const [searchOptions, setSearchOptions] = useState([])
   const [searchValue, setSearchValue] = useState('')
+  const [data, setData] = useState([])
+  const [marker, setMarker] = useState(null)
 
   const db = firebase.firestore()
 
@@ -30,8 +36,8 @@ const Dashboard = () => {
       .get()
       .then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
-          const data = doc.data()
-          setSearchOptions((prev) => [...prev, data.name])
+          const dbData = doc.data()
+          setData((prev) => [...prev, dbData])
         })
       })
   }, [])
@@ -54,10 +60,10 @@ const Dashboard = () => {
         .get()
         .then((querySnapshot) => {
           querySnapshot.forEach((doc) => {
-            const data = doc.data()
+            const place = doc.data()
             mapRef.current.panTo({
-              lat: data.location._lat,
-              lng: data.location._long,
+              lat: place.location._lat,
+              lng: place.location._long,
             })
             mapRef.current.setZoom(20)
           })
@@ -76,14 +82,36 @@ const Dashboard = () => {
       <div className={styles.container}>
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
-          zoom={8}
+          zoom={15}
           center={center}
           onLoad={onMapLoad}
         >
+          {data.map((place) => (
+            <Marker
+              key={place.location._lat}
+              position={{ lat: place.location._lat, lng: place.location._long }}
+              onClick={() => setMarker(place)}
+            />
+          ))}
+          {marker ? (
+            <InfoWindow
+              position={{
+                lat: marker.location._lat,
+                lng: marker.location._long,
+              }}
+              onCloseClick={() => setMarker(null)}
+            >
+              <div>
+                <h3>{marker.name}</h3>
+                <p>RATING</p>
+              </div>
+            </InfoWindow>
+          ) : null}
+
           <Autocomplete
             freeSolo
             id="search-bar"
-            options={searchOptions}
+            options={data.map((place) => place.name)}
             renderInput={(params) => (
               <TextField
                 {...params}
