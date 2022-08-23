@@ -55,8 +55,6 @@ const Dashboard = () => {
         .then((querySnapshot) => {
           querySnapshot.forEach((doc) => {
             const data = doc.data()
-            // console.log(data.location);
-
             mapRef.current.panTo({
               lat: data.location._lat,
               lng: data.location._long,
@@ -73,11 +71,6 @@ const Dashboard = () => {
   if (loadError) return 'Error loading maps.'
   if (!isLoaded) return 'Loading...'
 
-  const handleChange = (event, newSearchValue) => {
-    setSearchValue(newSearchValue)
-  }
-
-  console.log(searchValue)
   return (
     <div className={styles.root}>
       <div className={styles.container}>
@@ -110,7 +103,7 @@ const Dashboard = () => {
               />
             )}
             value={searchValue}
-            onChange={handleChange}
+            onChange={(event, newSearchValue) => setSearchValue(newSearchValue)}
           />
         </GoogleMap>
         <img src={images.logo} className={styles.logo} alt="logo" />
