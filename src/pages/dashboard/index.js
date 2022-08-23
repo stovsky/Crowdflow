@@ -1,9 +1,8 @@
-import {
-  GoogleMap,
-  StandaloneSearchBox,
-  useJsApiLoader,
-} from '@react-google-maps/api'
-import { useState, useRef, useCallback } from 'react'
+import 'firebase/firestore'
+import { GoogleMap, useJsApiLoader } from '@react-google-maps/api'
+import firebase from 'firebase/app'
+import { Autocomplete, TextField } from '@mui/material'
+import { useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Button from 'components/Button'
 import { actions } from 'slices/app.slice'
@@ -21,7 +20,21 @@ const center = {
 }
 
 const Dashboard = () => {
-  const [searchBox, setSearchBox] = useState(null)
+  const [searchOptions, setSearchOptions] = useState([])
+  const [searchValue, setSearchValue] = useState('')
+
+  const db = firebase.firestore()
+
+  useEffect(() => {
+    db.collection('places')
+      .get()
+      .then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+          const data = doc.data()
+          setSearchOptions((prev) => [...prev, data.name])
+        })
+      })
+  }, [])
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -34,7 +47,25 @@ const Dashboard = () => {
     mapRef.current = map
   }, [])
 
-  const searchRef = useRef()
+  useEffect(() => {
+    if (searchValue !== '') {
+      db.collection('places')
+        .where('name', '==', searchValue)
+        .get()
+        .then((querySnapshot) => {
+          querySnapshot.forEach((doc) => {
+            const data = doc.data()
+            // console.log(data.location);
+
+            mapRef.current.panTo({
+              lat: data.location._lat,
+              lng: data.location._long,
+            })
+            mapRef.current.setZoom(20)
+          })
+        })
+    }
+  }, [searchValue])
 
   const dispatch = useDispatch()
   const { me } = useSelector((state) => state.app)
@@ -42,11 +73,11 @@ const Dashboard = () => {
   if (loadError) return 'Error loading maps.'
   if (!isLoaded) return 'Loading...'
 
-  const handleLoad = () => {
-    const search = new window.google.maps.places.SearchBox(searchRef.current)
-    setSearchBox(search)
+  const handleChange = (event, newSearchValue) => {
+    setSearchValue(newSearchValue)
   }
 
+  console.log(searchValue)
   return (
     <div className={styles.root}>
       <div className={styles.container}>
@@ -56,35 +87,31 @@ const Dashboard = () => {
           center={center}
           onLoad={onMapLoad}
         >
-          <StandaloneSearchBox
-            onLoad={handleLoad}
-            onPlacesChanged={() =>
-              searchBox ? console.log(searchBox.getPlaces()) : null
-            }
-          >
-            <input
-              ref={searchRef}
-              id="search-box"
-              type="text"
-              placeholder="Find a place"
-              style={{
-                boxSizing: `border-box`,
-                border: `1px solid transparent`,
-                width: `240px`,
-                height: `32px`,
-                padding: `0 12px`,
-                borderRadius: `3px`,
-                boxShadow: `0 2px 6px rgba(0, 0, 0, 0.3)`,
-                fontSize: `14px`,
-                outline: `none`,
-                textOverflow: `ellipses`,
-                position: 'absolute',
-                left: '50%',
-                marginLeft: '-120px',
-                top: '2%',
-              }}
-            />
-          </StandaloneSearchBox>
+          <Autocomplete
+            freeSolo
+            id="search-bar"
+            options={searchOptions}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Search for a place"
+                variant="outlined"
+                style={{
+                  backgroundColor: 'white',
+                  width: '30%',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                  paddingBottom: 0,
+                  marginTop: 0,
+                  left: '35%',
+                  top: '2%',
+                  position: 'absolute',
+                }}
+              />
+            )}
+            value={searchValue}
+            onChange={handleChange}
+          />
         </GoogleMap>
         <img src={images.logo} className={styles.logo} alt="logo" />
         <h3 className={styles.greeting}>{`Hi👋, ${me?.fullName || 'User'}`}</h3>
