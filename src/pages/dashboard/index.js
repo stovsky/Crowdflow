@@ -6,7 +6,14 @@ import {
   InfoWindow,
 } from '@react-google-maps/api'
 import firebase from 'firebase/app'
-import { Autocomplete, TextField } from '@mui/material'
+import {
+  Autocomplete,
+  TextField,
+  FormGroup,
+  Checkbox,
+  FormControlLabel,
+  FormControl,
+} from '@mui/material'
 import { useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Button from 'components/Button'
@@ -27,6 +34,12 @@ const center = {
 const Dashboard = () => {
   const [searchValue, setSearchValue] = useState('')
   const [data, setData] = useState([])
+  const [categories, setCategories] = useState([
+    'restaurant',
+    'bar',
+    'gym',
+    'library',
+  ])
   const [marker, setMarker] = useState(null)
 
   const db = firebase.firestore()
@@ -85,6 +98,18 @@ const Dashboard = () => {
     return images.markerDefault
   }
 
+  const handleCheckboxClick = (label) => {
+    if (categories.includes(label)) {
+      const idx = categories.indexOf(label)
+      setCategories([
+        ...categories.slice(0, idx),
+        ...categories.slice(idx + 1, categories.length),
+      ])
+    } else {
+      setCategories([...categories, label])
+    }
+  }
+
   return (
     <div className={styles.root}>
       <div className={styles.container}>
@@ -96,6 +121,7 @@ const Dashboard = () => {
         >
           {data.map((place) => (
             <Marker
+              visible={place.types.some((r) => categories.includes(r))}
               icon={getIcon(place)}
               animation={window.google.maps.Animation.DROP}
               key={place.location._lat}
@@ -117,6 +143,47 @@ const Dashboard = () => {
               </div>
             </InfoWindow>
           ) : null}
+
+          <FormControl
+            style={{
+              position: 'absolute',
+              left: '1.5%',
+              top: '8%',
+              backgroundColor: 'white',
+              padding: '0 10px',
+              borderRadius: '3px',
+              boxSizing: `border-box`,
+              border: `1px solid transparent`,
+              boxShadow: `0 2px 6px rgba(0, 0, 0, 0.3)`,
+            }}
+          >
+            <FormGroup>
+              <FormControlLabel
+                control={<Checkbox defaultChecked />}
+                label="Restaurant"
+                onChange={() => handleCheckboxClick('restaurant')}
+                style={{ color: 'black' }}
+              />
+              <FormControlLabel
+                control={<Checkbox defaultChecked />}
+                label="Bar"
+                onChange={() => handleCheckboxClick('bar')}
+                style={{ color: 'black' }}
+              />
+              <FormControlLabel
+                control={<Checkbox defaultChecked />}
+                label="Gym"
+                onChange={() => handleCheckboxClick('gym')}
+                style={{ color: 'black' }}
+              />
+              <FormControlLabel
+                control={<Checkbox defaultChecked />}
+                label="Library"
+                onChange={() => handleCheckboxClick('library')}
+                style={{ color: 'black' }}
+              />
+            </FormGroup>
+          </FormControl>
 
           <Autocomplete
             freeSolo
