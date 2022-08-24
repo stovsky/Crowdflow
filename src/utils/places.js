@@ -1,9 +1,10 @@
-// eslint-disable
+/* eslint-disable */
 import {
   geohashQueryBounds,
   geohashForLocation,
   distanceBetween,
 } from 'geofire-common'
+/* eslint-enable */
 import { firestore } from './firebase'
 
 export const retrievePlacesByCategory = (category = 'cafe') => {
