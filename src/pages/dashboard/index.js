@@ -80,7 +80,8 @@ const Dashboard = () => {
   const getIcon = (place) => {
     if (place.types.includes('bar')) return images.markerBarOrange
     if (place.types.includes('restaurant')) return images.markerRestaurantOrange
-    if (place.types.includes('library')) return images.markerSchoolOrange
+    if (place.types.includes('library')) return images.markerLibraryOrange
+    if (place.types.includes('gym')) return images.markerGymOrange
     return images.markerDefault
   }
 
