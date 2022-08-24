@@ -77,6 +77,13 @@ const Dashboard = () => {
   if (loadError) return 'Error loading maps.'
   if (!isLoaded) return 'Loading...'
 
+  const getIcon = (place) => {
+    if (place.types.includes('bar')) return images.markerBarOrange
+    if (place.types.includes('restaurant')) return images.markerRestaurantOrange
+    if (place.types.includes('library')) return images.markerSchoolOrange
+    return images.markerDefault
+  }
+
   return (
     <div className={styles.root}>
       <div className={styles.container}>
@@ -88,6 +95,8 @@ const Dashboard = () => {
         >
           {data.map((place) => (
             <Marker
+              icon={getIcon(place)}
+              animation={window.google.maps.Animation.DROP}
               key={place.location._lat}
               position={{ lat: place.location._lat, lng: place.location._long }}
               onClick={() => setMarker(place)}
