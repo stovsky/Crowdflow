@@ -7,6 +7,18 @@ import {
 /* eslint-enable */
 import { firestore } from './firebase'
 
+export const retrievePlaces = (data, setData) => {
+  firestore
+    .collection('places')
+    .get()
+    .then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        const dbData = doc.data()
+        setData((prev) => [...prev, dbData])
+      })
+    })
+}
+
 export const retrievePlacesByCategory = (category = 'cafe') => {
   firestore
     .collection('places')

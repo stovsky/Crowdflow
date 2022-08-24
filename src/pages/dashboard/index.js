@@ -6,6 +6,7 @@ import {
   InfoWindow,
 } from '@react-google-maps/api'
 import firebase from 'firebase/app'
+import { submitRatingToDatabase, getPlacesRating } from 'utils/ratings'
 import {
   Autocomplete,
   TextField,
@@ -13,12 +14,16 @@ import {
   Checkbox,
   FormControlLabel,
   FormControl,
+  Container,
+  Rating,
+  Typography,
 } from '@mui/material'
 import { useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Button from 'components/Button'
 import { actions } from 'slices/app.slice'
 import { images } from 'theme'
+import { retrievePlaces } from 'utils/places'
 import styles from './dashboard.module.scss'
 
 const libraries = ['places']
@@ -32,6 +37,9 @@ const center = {
 }
 
 const Dashboard = () => {
+  const dispatch = useDispatch()
+  const { me } = useSelector((state) => state.app)
+
   const [searchValue, setSearchValue] = useState('')
   const [data, setData] = useState([])
   const [categories, setCategories] = useState([
@@ -41,18 +49,13 @@ const Dashboard = () => {
     'library',
   ])
   const [marker, setMarker] = useState(null)
+  const [rating, setRating] = useState(null)
+  const [placeRatings, setPlaceRatings] = useState([])
 
   const db = firebase.firestore()
 
   useEffect(() => {
-    db.collection('places')
-      .get()
-      .then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-          const dbData = doc.data()
-          setData((prev) => [...prev, dbData])
-        })
-      })
+    retrievePlaces(data, setData)
   }, [])
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -84,8 +87,13 @@ const Dashboard = () => {
     }
   }, [searchValue])
 
-  const dispatch = useDispatch()
-  const { me } = useSelector((state) => state.app)
+  useEffect(() => {
+    if (rating) {
+      submitRatingToDatabase(rating, me?.id, marker.id)
+      setPlaceRatings(getPlacesRating(marker.id))
+      console.log(placeRatings)
+    }
+  }, [rating])
 
   if (loadError) return 'Error loading maps.'
   if (!isLoaded) return 'Loading...'
@@ -118,6 +126,8 @@ const Dashboard = () => {
           zoom={15}
           center={center}
           onLoad={onMapLoad}
+          onClick={() => setMarker(null)}
+          options={{ maxZoom: 20 }}
         >
           {data.map((place) => (
             <Marker
@@ -132,15 +142,18 @@ const Dashboard = () => {
           {marker ? (
             <InfoWindow
               position={{
-                lat: marker.location._lat,
+                lat: marker.location._lat + 0.00003,
                 lng: marker.location._long,
               }}
               onCloseClick={() => setMarker(null)}
             >
-              <div>
-                <h3>{marker.name}</h3>
-                <p>RATING</p>
-              </div>
+              <Container>
+                <Typography>Rating</Typography>
+                <Rating
+                  value={rating}
+                  onChange={(event, newRating) => setRating(newRating)}
+                />
+              </Container>
             </InfoWindow>
           ) : null}
 
