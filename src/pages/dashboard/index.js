@@ -6,7 +6,11 @@ import {
   InfoWindow,
 } from '@react-google-maps/api'
 import firebase from 'firebase/app'
-import { submitRatingToDatabase, getPlacesRating } from 'utils/ratings'
+import {
+  submitRatingToDatabase,
+  getPlacesRating,
+  checkExpired,
+} from 'utils/ratings'
 import {
   Autocomplete,
   TextField,
@@ -56,6 +60,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     retrievePlaces(data, setData)
+    checkExpired(me?.id)
   }, [])
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -90,7 +95,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (rating) {
       submitRatingToDatabase(rating, me?.id, marker.id)
-      setPlaceRatings(getPlacesRating(marker.id))
+      setPlaceRatings(getPlacesRating())
       console.log(placeRatings)
     }
   }, [rating])
