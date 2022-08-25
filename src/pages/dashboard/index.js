@@ -5,12 +5,7 @@ import {
   Marker,
   InfoWindow,
 } from '@react-google-maps/api'
-import firebase from 'firebase/app'
-import {
-  submitRatingToDatabase,
-  getPlacesRating,
-  checkExpired,
-} from 'utils/ratings'
+import { submitRatingToDatabase, checkExpired } from 'utils/ratings'
 import {
   Autocomplete,
   TextField,
@@ -21,13 +16,14 @@ import {
   Container,
   Rating,
   Typography,
+  Box,
 } from '@mui/material'
 import { useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Button from 'components/Button'
 import { actions } from 'slices/app.slice'
 import { images } from 'theme'
-import { retrievePlaces } from 'utils/places'
+import { retrievePlaces, retrievePlacesByName } from 'utils/places'
 import styles from './dashboard.module.scss'
 
 const libraries = ['places']
@@ -54,12 +50,9 @@ const Dashboard = () => {
   ])
   const [marker, setMarker] = useState(null)
   const [rating, setRating] = useState(null)
-  const [placeRatings, setPlaceRatings] = useState([])
-
-  const db = firebase.firestore()
 
   useEffect(() => {
-    retrievePlaces(data, setData)
+    retrievePlaces().then((places) => setData(places))
     checkExpired(me?.id)
   }, [])
 
@@ -76,27 +69,19 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (searchValue !== '') {
-      db.collection('places')
-        .where('name', '==', searchValue)
-        .get()
-        .then((querySnapshot) => {
-          querySnapshot.forEach((doc) => {
-            const place = doc.data()
-            mapRef.current.panTo({
-              lat: place.location._lat,
-              lng: place.location._long,
-            })
-            mapRef.current.setZoom(20)
-          })
+      retrievePlacesByName(searchValue).then((place) => {
+        mapRef.current.panTo({
+          lat: place.location._lat,
+          lng: place.location._long,
         })
+        mapRef.current.setZoom(20)
+      })
     }
   }, [searchValue])
 
   useEffect(() => {
     if (rating) {
       submitRatingToDatabase(rating, me?.id, marker.id)
-      setPlaceRatings(getPlacesRating())
-      console.log(placeRatings)
     }
   }, [rating])
 
@@ -153,11 +138,49 @@ const Dashboard = () => {
               onCloseClick={() => setMarker(null)}
             >
               <Container>
-                <Typography>Rating</Typography>
-                <Rating
-                  value={rating}
-                  onChange={(event, newRating) => setRating(newRating)}
-                />
+                <Box
+                  height={300}
+                  width={125}
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      width: 125,
+                      height: 125,
+                      borderRadius: '50%',
+                      border: '5px solid black',
+                      top: '6%',
+                    }}
+                  />
+                  <Typography
+                    position="absolute"
+                    top="12%"
+                    fontFamily="Raleway"
+                    fontStyle="bold"
+                    fontSize="60px"
+                  >
+                    {marker.rating}
+                  </Typography>
+                  <Typography
+                    position="absolute"
+                    top="48%"
+                    fontFamily="Raleway"
+                    fontStyle="bold"
+                    fontSize="relative"
+                    margin="0"
+                  >
+                    {marker.name}
+                  </Typography>
+                  <div />
+                  <Rating
+                    style={{ position: 'absolute', top: '60%' }}
+                    value={rating}
+                    onChange={(event, newRating) => setRating(newRating)}
+                  />
+                </Box>
               </Container>
             </InfoWindow>
           ) : null}

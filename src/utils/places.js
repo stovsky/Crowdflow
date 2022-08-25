@@ -7,16 +7,31 @@ import {
 /* eslint-enable */
 import { firestore } from './firebase'
 
-export const retrievePlaces = (data, setData) => {
-  firestore
+export const retrievePlaces = async () => {
+  const places = []
+  await firestore
     .collection('places')
     .get()
     .then((querySnapshot) => {
       querySnapshot.forEach((doc) => {
-        const dbData = doc.data()
-        setData((prev) => [...prev, dbData])
+        const data = doc.data()
+        places.push(data)
       })
     })
+  return places
+}
+
+export const retrievePlacesByName = async (name) => {
+  let place = {}
+  await firestore
+    .collection('places')
+    .where('name', '==', name)
+    .get()
+    .then((querySnapshot) => {
+      querySnapshot.forEach((doc) => (place = doc.data()))
+    })
+
+  return place
 }
 
 export const retrievePlacesByCategory = (category = 'cafe') => {

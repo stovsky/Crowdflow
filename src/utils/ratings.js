@@ -26,39 +26,42 @@ export const checkExpired = (uid) => {
 }
 
 // Store rating in database table
-export const submitRatingToDatabase = (rating, uid, placeID) => {
+export const submitRatingToDatabase = async (rating, uid, placeID) => {
   // If query looking for this returns anything, delete it
 
   const currentTime = firebase.firestore.Timestamp.now()
+  let alreadyExists = true
 
-  firestore
+  await firestore
     .collection('active-ratings')
     .where('uid', '==', uid)
     .where('place_id', '==', placeID)
     .get()
-    .then((querySnapshot) => {
+    .then(async (querySnapshot) => {
       if (querySnapshot.docs.length === 0) {
-        firestore.collection('active-ratings').add({
-          uid,
-          rating,
-          place_id: placeID,
-          timestamp: currentTime,
-        })
+        alreadyExists = false
       } else {
-        querySnapshot.forEach((doc) => {
-          doc.ref.update({
-            rating,
-            timestamp: currentTime,
-          })
+        await querySnapshot.docs.at(0).ref.update({
+          rating,
+          timestamp: currentTime,
         })
       }
     })
-}
 
-export const getPlacesRating = () => {
+  if (!alreadyExists) {
+    await firestore.collection('active-ratings').add({
+      uid,
+      rating,
+      place_id: placeID,
+      timestamp: currentTime,
+    })
+  }
+
   const ratings = []
-  firestore
+
+  await firestore
     .collection('active-ratings')
+    .where('place_id', '==', placeID)
     .get()
     .then((querySnapshot) => {
       querySnapshot.forEach((doc) => {
@@ -67,5 +70,17 @@ export const getPlacesRating = () => {
       })
     })
 
-  return ratings
+  const average = ratings.reduce((a, b) => a + b) / ratings.length
+
+  await firestore
+    .collection('places')
+    .where('id', '==', placeID)
+    .get()
+    .then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        doc.ref.update({
+          rating: average,
+        })
+      })
+    })
 }
