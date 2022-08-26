@@ -32,4 +32,38 @@ export const images = {
   markerGymRed,
 }
 
+export const getIcon = (place) => {
+  if (place) {
+    if (place.types.includes('bar')) {
+      if (place.rating >= 1 && place.rating < 2.333)
+        return images.markerBarGreen
+      if (place.rating >= 2.333 && place.rating < 3.666)
+        return images.markerBarOrange
+      return images.markerBarRed
+    }
+    if (place.types.includes('restaurant')) {
+      if (place.rating >= 1 && place.rating < 2.333)
+        return images.markerRestaurantGreen
+      if (place.rating >= 2.333 && place.rating < 3.666)
+        return images.markerRestaurantOrange
+      return images.markerRestaurantRed
+    }
+    if (place.types.includes('library')) {
+      if (place.rating >= 1 && place.rating < 2.333)
+        return images.markerLibraryGreen
+      if (place.rating >= 2.333 && place.rating < 3.666)
+        return images.markerLibraryOrange
+      return images.markerLibraryRed
+    }
+    if (place.types.includes('gym')) {
+      if (place.rating >= 1 && place.rating < 2.333)
+        return images.markerGymGreen
+      if (place.rating >= 2.333 && place.rating < 3.666)
+        return images.markerGymOrange
+      return images.markerGymRed
+    }
+  }
+  return images.markerDefault
+}
+
 export default {}

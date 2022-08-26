@@ -25,6 +25,7 @@ import Button from 'components/Button'
 import { actions } from 'slices/app.slice'
 import { images } from 'theme'
 import { retrievePlaces, retrievePlacesByName } from 'utils/places'
+import { getIcon } from 'assets'
 import styles from './dashboard.module.scss'
 
 const libraries = ['places']
@@ -98,14 +99,6 @@ const Dashboard = () => {
   if (loadError) return 'Error loading maps.'
   if (!isLoaded) return 'Loading...'
 
-  const getIcon = (place) => {
-    if (place.types.includes('bar')) return images.markerBarOrange
-    if (place.types.includes('restaurant')) return images.markerRestaurantOrange
-    if (place.types.includes('library')) return images.markerLibraryOrange
-    if (place.types.includes('gym')) return images.markerGymOrange
-    return images.markerDefault
-  }
-
   const handleCheckboxClick = (label) => {
     if (categories.includes(label)) {
       const idx = categories.indexOf(label)
@@ -132,7 +125,7 @@ const Dashboard = () => {
           {initialData.map((place) => (
             <Marker
               visible={place.types.some((r) => categories.includes(r))}
-              icon={getIcon(place)}
+              icon={getIcon(data.find((obj) => obj.id === place.id))}
               animation={window.google.maps.Animation.DROP}
               key={place.id}
               position={{ lat: place.location._lat, lng: place.location._long }}
