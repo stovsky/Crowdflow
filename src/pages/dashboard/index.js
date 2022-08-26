@@ -5,6 +5,7 @@ import {
   Marker,
   InfoWindow,
 } from '@react-google-maps/api'
+import { firestore } from 'utils/firebase'
 import { submitRatingToDatabase, checkExpired } from 'utils/ratings'
 import {
   Autocomplete,
@@ -42,17 +43,26 @@ const Dashboard = () => {
 
   const [searchValue, setSearchValue] = useState('')
   const [data, setData] = useState([])
+  const [initialData, setInitialData] = useState([])
   const [categories, setCategories] = useState([
     'restaurant',
     'bar',
     'gym',
     'library',
   ])
-  const [marker, setMarker] = useState(null)
+  const [selectedMarker, setSelectedMarker] = useState(null)
   const [rating, setRating] = useState(null)
 
   useEffect(() => {
-    retrievePlaces().then((places) => setData(places))
+    firestore.collection('places').onSnapshot((querySnapshot) => {
+      setData([])
+      querySnapshot.forEach((doc) => {
+        const place = doc.data()
+        setData((prev) => [...prev, place])
+      })
+    })
+
+    retrievePlaces(initialData, setInitialData)
     checkExpired(me?.id)
   }, [])
 
@@ -81,7 +91,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (rating) {
-      submitRatingToDatabase(rating, me?.id, marker.id)
+      submitRatingToDatabase(rating, me?.id, selectedMarker.id)
     }
   }, [rating])
 
@@ -116,26 +126,28 @@ const Dashboard = () => {
           zoom={15}
           center={center}
           onLoad={onMapLoad}
-          onClick={() => setMarker(null)}
+          onClick={() => setSelectedMarker(null)}
           options={{ maxZoom: 20 }}
         >
-          {data.map((place) => (
+          {initialData.map((place) => (
             <Marker
               visible={place.types.some((r) => categories.includes(r))}
               icon={getIcon(place)}
               animation={window.google.maps.Animation.DROP}
-              key={place.location._lat}
+              key={place.id}
               position={{ lat: place.location._lat, lng: place.location._long }}
-              onClick={() => setMarker(place)}
+              onClick={() => {
+                setSelectedMarker(data.find((obj) => obj.id === place.id))
+              }}
             />
           ))}
-          {marker ? (
+          {selectedMarker ? (
             <InfoWindow
               position={{
-                lat: marker.location._lat + 0.00003,
-                lng: marker.location._long,
+                lat: selectedMarker.location._lat + 0.00003,
+                lng: selectedMarker.location._long,
               }}
-              onCloseClick={() => setMarker(null)}
+              onCloseClick={() => setSelectedMarker(null)}
             >
               <Container>
                 <Box
@@ -162,7 +174,7 @@ const Dashboard = () => {
                     fontStyle="bold"
                     fontSize="60px"
                   >
-                    {marker.rating}
+                    {selectedMarker.rating}
                   </Typography>
                   <Typography
                     position="absolute"
@@ -172,7 +184,7 @@ const Dashboard = () => {
                     fontSize="relative"
                     margin="0"
                   >
-                    {marker.name}
+                    {selectedMarker.name}
                   </Typography>
                   <div />
                   <Rating
