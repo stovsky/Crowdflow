@@ -24,7 +24,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import Button from 'components/Button'
 import { actions } from 'slices/app.slice'
 import { images } from 'theme'
-import { retrievePlaces, retrievePlacesByName } from 'utils/places'
+import { getClosestPlaces, retrievePlacesByName } from 'utils/places'
 import { getIcon } from 'assets'
 import styles from './dashboard.module.scss'
 
@@ -36,6 +36,12 @@ const mapContainerStyle = {
 const center = {
   lat: 34.0689,
   lng: -118.4452,
+}
+
+const options = {
+  maxZoom: 20,
+  streetViewControl: false,
+  clickableIcons: false,
 }
 
 const Dashboard = () => {
@@ -63,8 +69,8 @@ const Dashboard = () => {
       })
     })
 
-    retrievePlaces(initialData, setInitialData)
-    checkExpired(me?.id)
+    getClosestPlaces([center.lat, center.lng], initialData, setInitialData)
+    checkExpired()
   }, [])
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -86,6 +92,12 @@ const Dashboard = () => {
           lng: place.location._long,
         })
         mapRef.current.setZoom(20)
+        getClosestPlaces(
+          [place.location._lat, place.location._long],
+          initialData,
+          setInitialData,
+        )
+        console.log(initialData)
       })
     }
   }, [searchValue])
@@ -120,7 +132,7 @@ const Dashboard = () => {
           center={center}
           onLoad={onMapLoad}
           onClick={() => setSelectedMarker(null)}
-          options={{ maxZoom: 20 }}
+          options={options}
         >
           {initialData.map((place) => (
             <Marker

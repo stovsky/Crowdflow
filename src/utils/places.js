@@ -59,7 +59,13 @@ export const retrievePlacesByCategory = (category = 'cafe') => {
 
 // Retrieve places nearby
 // Currently finds everything within 50km radius and sorts by that
-export const getClosestPlaces = (location = [34.0712, -118.4457]) => {
+export const getClosestPlaces = (
+  location = [34.0712, -118.4457],
+  initialData,
+  setInitialData,
+) => {
+  setInitialData([])
+
   const center = location
   const radiusInM = 50 * 1000 // Radius currently set to 50km
   const bounds = geohashQueryBounds(center, radiusInM)
@@ -74,60 +80,25 @@ export const getClosestPlaces = (location = [34.0712, -118.4457]) => {
     promises.push(q.get())
   })
 
-  Promise.all(promises)
-    .then((snapshots) => {
-      const matchingDocs = []
-      snapshots.forEach((snap) => {
-        snap.docs.forEach((doc) => {
-          // this foreach loop never runs??
-          const lat = doc.data().location._lat
-          const lng = doc.data().location._long
+  Promise.all(promises).then((snapshots) => {
+    // const matchingDocs = []
+    snapshots.forEach((snap) => {
+      snap.docs.forEach((doc) => {
+        // this foreach loop never runs??
+        const lat = doc.data().location._lat
+        const lng = doc.data().location._long
 
-          // We have to filter out a few false positives due to GeoHash
-          // accuracy, but most will match
-          const distanceInKm = distanceBetween([lat, lng], center)
-          const distanceInM = distanceInKm * 1000
-          if (distanceInM <= radiusInM) {
-            matchingDocs.push(doc)
-          }
-        })
-      })
-
-      // Sorts the matching places within the specified radius by distance from location
-      matchingDocs.sort((first, second) => {
-        if (
-          distanceBetween(
-            [first.data().location._lat, first.data().location._long],
-            center,
-          ) <
-          distanceBetween(
-            [second.data().location._lat, second.data().location._long],
-            center,
-          )
-        ) {
-          return 1
+        // We have to filter out a few false positives due to GeoHash
+        // accuracy, but most will match
+        const distanceInKm = distanceBetween([lat, lng], center)
+        const distanceInM = distanceInKm * 1000
+        if (distanceInM <= radiusInM) {
+          // matchingDocs.push(doc.data())
+          setInitialData((prev) => [...prev, doc.data()])
         }
-        if (
-          distanceBetween(
-            [first.data().location._lat, first.data().location._long],
-            center,
-          ) >
-          distanceBetween(
-            [second.data().location._lat, second.data().location._long],
-            center,
-          )
-        ) {
-          return -1
-        }
-        return 0
       })
-      // TODO: implement sorting by minimum distance to user location here
-      return matchingDocs
     })
-    .then((matchingDocs) => {
-      // What do you do once the matchind place docs are set into matchingdocs?
-      console.log(matchingDocs)
-    })
+  })
 }
 
 // Create Geohash for every entry in places table

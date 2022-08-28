@@ -1,6 +1,6 @@
 import firebase, { firestore } from './firebase'
 
-export const checkExpired = (uid) => {
+export const checkExpired = () => {
   const time = new Date()
   time.setTime(time.getTime() - 14400000)
   const firestoreTime = firebase.firestore.Timestamp.fromDate(time)
@@ -14,7 +14,7 @@ export const checkExpired = (uid) => {
         const data = doc.data()
 
         firestore.collection('inactive-ratings').add({
-          uid,
+          uid: data.uid,
           rating: data.rating,
           place_id: data.place_id,
           timestamp: data.timestamp,
