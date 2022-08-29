@@ -1,10 +1,5 @@
 import 'firebase/firestore'
-import {
-  GoogleMap,
-  useJsApiLoader,
-  Marker,
-  InfoWindow,
-} from '@react-google-maps/api'
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api'
 import { firestore } from 'utils/firebase'
 import { submitRatingToDatabase, checkExpired } from 'utils/ratings'
 import {
@@ -14,19 +9,48 @@ import {
   Checkbox,
   FormControlLabel,
   FormControl,
-  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  IconButton,
   Rating,
-  Typography,
+  CircularProgress,
   Box,
+  Typography,
+  ThemeProvider,
+  Stack,
+  Divider,
 } from '@mui/material'
+import { Close } from '@mui/icons-material'
 import { useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Button from 'components/Button'
 import { actions } from 'slices/app.slice'
 import { images } from 'theme'
 import { getClosestPlaces, retrievePlacesByName } from 'utils/places'
+import { createTheme } from '@mui/material/styles'
 import { getIcon } from 'assets'
 import styles from './dashboard.module.scss'
+
+const theme = createTheme({
+  palette: {
+    hot: {
+      main: '#f00e21',
+    },
+    medium: {
+      main: '#FF8A00',
+    },
+    cold: {
+      main: '#BDD70E',
+    },
+  },
+})
+
+const getColor = (place) => {
+  if (place.rating >= 1 && place.rating < 2.333) return 'cold'
+  if (place.rating >= 2.333 && place.rating < 3.666) return 'medium'
+  return 'hot'
+}
 
 const libraries = ['places']
 const mapContainerStyle = {
@@ -97,14 +121,13 @@ const Dashboard = () => {
           initialData,
           setInitialData,
         )
-        console.log(initialData)
       })
     }
   }, [searchValue])
 
   useEffect(() => {
     if (rating) {
-      submitRatingToDatabase(rating, me?.id, selectedMarker.id)
+      submitRatingToDatabase(selectedMarker.id, me?.id, rating)
     }
   }, [rating])
 
@@ -122,6 +145,68 @@ const Dashboard = () => {
       setCategories([...categories, label])
     }
   }
+
+  const openDialog = () => (
+    <Dialog open onClose={() => setSelectedMarker(null)} maxWidth="sm">
+      <DialogContent>
+        <Stack alignItems="center" spacing={1}>
+          <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+            <ThemeProvider theme={theme}>
+              <CircularProgress
+                color={getColor(selectedMarker)}
+                size="5rem"
+                variant="determinate"
+                value={
+                  ((selectedMarker.rating - 1) * 100) / 4 !== 0
+                    ? ((selectedMarker.rating - 1) * 100) / 4
+                    : 5
+                }
+              />
+            </ThemeProvider>
+            <Box
+              sx={{
+                top: 0,
+                left: 0,
+                bottom: 0,
+                right: 0,
+                position: 'absolute',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography color="black" fontSize="1.5rem">
+                {selectedMarker.rating}
+              </Typography>
+            </Box>
+          </Box>
+          <Typography variant="h5">{selectedMarker.name}</Typography>
+          <Divider flexItem />
+          <Typography>How busy?</Typography>
+          <Rating
+            value={rating}
+            onChange={(event, newRating) => setRating(newRating)}
+          />
+          <Typography>{`Score based on ${selectedMarker.users} ${
+            selectedMarker.users === 1 ? 'user' : 'users'
+          }`}</Typography>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <IconButton
+          aria-label="close"
+          onClick={() => setSelectedMarker(null)}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+          }}
+        >
+          <Close />
+        </IconButton>
+      </DialogActions>
+    </Dialog>
+  )
 
   return (
     <div className={styles.root}>
@@ -146,61 +231,7 @@ const Dashboard = () => {
               }}
             />
           ))}
-          {selectedMarker ? (
-            <InfoWindow
-              position={{
-                lat: selectedMarker.location._lat + 0.00003,
-                lng: selectedMarker.location._long,
-              }}
-              onCloseClick={() => setSelectedMarker(null)}
-            >
-              <Container>
-                <Box
-                  height={300}
-                  width={125}
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                >
-                  <div
-                    style={{
-                      position: 'absolute',
-                      width: 125,
-                      height: 125,
-                      borderRadius: '50%',
-                      border: '5px solid black',
-                      top: '6%',
-                    }}
-                  />
-                  <Typography
-                    position="absolute"
-                    top="12%"
-                    fontFamily="Raleway"
-                    fontStyle="bold"
-                    fontSize="60px"
-                  >
-                    {selectedMarker.rating}
-                  </Typography>
-                  <Typography
-                    position="absolute"
-                    top="48%"
-                    fontFamily="Raleway"
-                    fontStyle="bold"
-                    fontSize="relative"
-                    margin="0"
-                  >
-                    {selectedMarker.name}
-                  </Typography>
-                  <div />
-                  <Rating
-                    style={{ position: 'absolute', top: '60%' }}
-                    value={rating}
-                    onChange={(event, newRating) => setRating(newRating)}
-                  />
-                </Box>
-              </Container>
-            </InfoWindow>
-          ) : null}
+          {selectedMarker ? openDialog() : null}
 
           <FormControl
             style={{
