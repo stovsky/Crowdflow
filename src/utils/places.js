@@ -17,7 +17,6 @@ export const retrievePlacesByCategory = (category = 'cafe') => {
       })
     })
 }
-// what do you
 
 // Retrieve places nearby
 // Currently finds everything within 50km radius and sorts by that

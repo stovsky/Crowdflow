@@ -16,3 +16,11 @@ ReactDOM.render(
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals()
+
+/* TODO (LUKEDALTON)
+
+* Fix Dashboard styling to remove old logos + make map fullscreen 
+    Doing this first - can work on the styling of the map
+    FINALLY DONE
+* Add logout capabilities from header
+*/

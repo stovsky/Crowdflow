@@ -5,9 +5,12 @@
   "description": "create-react-app based firebase, liter, formatter & test pre-setup project",
   "author": "Wataru Maeda <w.maeda.ca@gmail.com>",
   "dependencies": {
+    "@emotion/react": "^11.10.0",
+    "@emotion/styled": "^11.10.0",
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
     "@fortawesome/free-solid-svg-icons": "^5.15.3",
     "@fortawesome/react-fontawesome": "^0.1.14",
+    "@mui/icons-material": "^5.10.2",
     "@mui/material": "^5.10.2",
     "@react-google-maps/api": "^2.12.1",
     "@reduxjs/toolkit": "^1.5.1",
