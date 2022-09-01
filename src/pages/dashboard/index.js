@@ -51,8 +51,8 @@ const getColor = (place) => {
 
 const libraries = ['places']
 const mapContainerStyle = {
-  width: '80vw',
-  height: '100vh',
+  width: '100%',
+  height: '100%',
 }
 const center = {
   lat: 34.0689,
