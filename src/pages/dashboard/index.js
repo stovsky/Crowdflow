@@ -172,7 +172,9 @@ const Dashboard = () => {
               }}
             >
               <Typography color="black" fontSize="1.5rem">
-                {selectedMarker.rating}
+                {data.find((obj) => obj.id === selectedMarker.id)
+                  ? data.find((obj) => obj.id === selectedMarker.id).rating
+                  : null}
               </Typography>
             </Box>
           </Box>
