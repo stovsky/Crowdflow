@@ -3,10 +3,9 @@
 .root {
   flex: 1;
   display: flex;
-  position: relative;
   flex-direction: column;
   background-color: $dark-gray;
-  height: '100vh';
+  height: '100%';
 }
 
 .container {
@@ -15,7 +14,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: rem(50);
+  padding: rem(10);
 }
 
 .greeting {
