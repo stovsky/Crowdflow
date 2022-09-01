@@ -43,12 +43,6 @@ const theme = createTheme({
   },
 })
 
-const getColor = (place) => {
-  if (place.rating >= 1 && place.rating < 2.333) return 'cold'
-  if (place.rating >= 2.333 && place.rating < 3.666) return 'medium'
-  return 'hot'
-}
-
 const libraries = ['places']
 const mapContainerStyle = {
   width: '100%',
@@ -141,6 +135,15 @@ const Dashboard = () => {
       setCategories([...categories, label])
     }
   }
+  const getData = (place) => data.find((obj) => obj.id === place.id)
+
+  const getColor = (place) => {
+    const selected = getData(place)
+    if (!selected) return 'hot'
+    if (selected.rating >= 1 && selected.rating < 2.333) return 'cold'
+    if (selected.rating >= 2.333 && selected.rating < 3.666) return 'medium'
+    return 'hot'
+  }
 
   const openDialog = () => (
     <Dialog open onClose={() => setSelectedMarker(null)} maxWidth="sm">
@@ -153,8 +156,9 @@ const Dashboard = () => {
                 size="5rem"
                 variant="determinate"
                 value={
-                  ((selectedMarker.rating - 1) * 100) / 4 !== 0
-                    ? ((selectedMarker.rating - 1) * 100) / 4
+                  getData(selectedMarker) &&
+                  ((getData(selectedMarker).rating - 1) * 100) / 4 !== 0
+                    ? ((getData(selectedMarker).rating - 1) * 100) / 4
                     : 5
                 }
               />
@@ -172,8 +176,8 @@ const Dashboard = () => {
               }}
             >
               <Typography color="black" fontSize="1.5rem">
-                {data.find((obj) => obj.id === selectedMarker.id)
-                  ? data.find((obj) => obj.id === selectedMarker.id).rating
+                {getData(selectedMarker)
+                  ? getData(selectedMarker).rating.toPrecision(2)
                   : null}
               </Typography>
             </Box>
@@ -185,9 +189,13 @@ const Dashboard = () => {
             value={rating}
             onChange={(event, newRating) => setRating(newRating)}
           />
-          <Typography>{`Score based on ${selectedMarker.users} ${
-            selectedMarker.users === 1 ? 'user' : 'users'
-          }`}</Typography>
+          <Typography>
+            {getData(selectedMarker)
+              ? `Score based on ${getData(selectedMarker).users} ${
+                  getData(selectedMarker).users === 1 ? 'user' : 'users'
+                }`
+              : null}
+          </Typography>
         </Stack>
       </DialogContent>
       <DialogActions>
